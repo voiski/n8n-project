@@ -20,5 +20,17 @@ init:
 	brew install colima docker docker-compose
 	colima start
 
-run:
+start:
 	docker-compose up -d
+
+status:
+	docker-compose ps
+
+stop:
+	docker-compose down
+
+restart:
+	docker-compose restart
+
+logs:
+	docker-compose logs -f

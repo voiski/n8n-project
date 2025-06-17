@@ -1,7 +1,0 @@
-# local dev environment
-services:
-  n8n:
-    environment:
-      - N8N_EDITOR_BASE_URL=http://localhost:5678
-      - NODE_ENV=local
-      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-America/Sao_Paulo}
