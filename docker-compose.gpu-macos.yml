@@ -1,0 +1,14 @@
+# Local setup to init the environment
+# Disables docker ollama and set hostname to mac localhost service, require to start ollama on mac for gpu support.
+services:
+  n8n:
+    depends_on: !reset
+    extra_hosts:
+      - "ollama:host-gateway"
+
+  ollama: !reset
+
+  ollama-webui:
+    depends_on: !reset
+    extra_hosts:
+      - "ollama:host-gateway"

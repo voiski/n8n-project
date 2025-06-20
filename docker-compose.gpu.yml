@@ -1,0 +1,12 @@
+# GPU support for linux and windows
+# For macos, check for docker-compose.macos-gpu.yml
+services:
+  ollama:
+    # Enable gpu
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

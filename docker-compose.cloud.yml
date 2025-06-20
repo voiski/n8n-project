@@ -8,6 +8,8 @@
 # Source from:
 # * https://docs.n8n.io/hosting/installation/server-setups/docker-compose/#5-create-local-files-directory
 services:
+  # If cloud, we would probably use a cloud database
+  pgvector: !reset
 
   traefik:
     image: traefik
@@ -60,6 +62,15 @@ services:
       # Disable telemetry and new versions notifications
       - N8N_DIAGNOSTICS_ENABLED=false
       - N8N_VERSION_NOTIFICATIONS_ENABLED=false
+
+  ollama:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
 volumes:
   n8n_data:

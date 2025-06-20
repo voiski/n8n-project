@@ -8,8 +8,11 @@ Requires:
 * docker-compose
 
 Use `make init` to install docker over colima.
+* Set `gpu_enabled=true` to the `.env` to have gpu support - only works for linux and windows.
+* For macos, you set `native_mac=true` to the `.env` to have gpu support.
 
 > You can also try `make bootstrap` to install dependencies, start the containers, and load the default model.
+> Use same variables for gpu support.
 
 ### Bootstrap
 
@@ -20,8 +23,13 @@ The first time will require to sign for a free license.
 * Then select to receive the license in the next page.
 * Go in the `settings > Usage and plan` and put the active key you received in your email.
 
-Also access the ollama webui at http://localhost:3000.
+Next, you will need to config some connection at [n8n credentials]:
+* Add connection for ollama:
+    * Base URL: http://ollama:11434
+
+You can also play around ollama webui at http://localhost:3000.
 * If not done yet, load a model using `make load-model`
+* We default to `gemma3`, but you can load different models using `make load-model model=<model_name>`
 
 ### The makefile
 
@@ -40,10 +48,12 @@ Targets:
 	open-ollama                    open ollama in browser
 
 Options:
-	model                          Model to use for ollama, default: gemma3 (light); others: deepseek-r1 (good), llama4 (huge)
+	model                          Model to use for ollama, default: gemma3 (light); others: mistral, deepseek-r1 (big), llama4 (huge)
 	cpu                            Number of CPUs to allocate for colima
 	memory                         Memory to allocate for colima
 	disk                           Disk space to allocate for colima
+	gpu_enabled                    Enable ollama gpu support on linux and windows
+	native_mac                     Enable ollama gpu support on macos
 ```
 
 ## Development
@@ -66,3 +76,4 @@ Feel free to ask for access to the project.
 You can also fork and open a pull request.
 
 [server-setups]: https://docs.n8n.io/hosting/installation/server-setups/
+[n8n credentials]: http://localhost:5678/home/credentials
