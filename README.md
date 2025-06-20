@@ -68,6 +68,10 @@ Access the http://localhost:5678 and login with your credentials.
 
 Ensure to store the workflows in the `workflows` directory so we can keep it versioned.
 
+At now, all the workflows will need to be imported manually. Please, name the workflows to match the file names.
+* `workflows/sample.json` Simple sample from https://n8n.io/workflows/2729-private-and-local-ollama-self-hosted-ai-assistant/
+* `workflows/project-1.json` Our current solution for the project [project-1 requirements].
+
 ### Testing
 
 TBD - we need to define what is a test strategy here. I.E. We can define samples for workflows.
@@ -82,3 +86,4 @@ You can also fork and open a pull request.
 
 [server-setups]: https://docs.n8n.io/hosting/installation/server-setups/
 [n8n credentials]: http://localhost:5678/home/credentials
+[project-1 requirements]: https://sites.google.com/i2a2.academy/agentes-autonomos-com-ia-gen/atividade-obrigat%C3%B3ria-2025-06-18

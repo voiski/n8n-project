@@ -1,0 +1,334 @@
+{
+  "name": "My workflow copy2",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.compression",
+      "typeVersion": 1.1,
+      "position": [
+        220,
+        0
+      ],
+      "id": "d1f320a0-0b14-4046-8068-6bb0cf1615be",
+      "name": "Compression"
+    },
+    {
+      "parameters": {
+        "binaryPropertyName": "file_1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        460,
+        180
+      ],
+      "id": "797a7e06-7f39-4443-8e97-17d69ca3e661",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "binaryPropertyName": "file_0",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        460,
+        -60
+      ],
+      "id": "c9a67689-a2cf-45e8-b871-8b413964fa40",
+      "name": "Extract from File1"
+    },
+    {
+      "parameters": {
+        "fileSelector": "[CAMINHO/DO/ARQUIVO.zip]",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        -20,
+        0
+      ],
+      "id": "02fc8430-627a-47d2-a8f4-4ed02d783221",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  return {\n    json: {\n      \"DATA EMISSÃO\": item.json[\"DATA EMISSÃO\"] || item.json[\"DATA EMISSAO\"],\n      \"UF EMITENTE\": item.json[\"UF DESTINATÁRIO\"],\n      \"VALOR NOTA FISCAL\": item.json[\"VALOR NOTA FISCAL\"] || item.json[\"Valor total\"]\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        740,
+        -60
+      ],
+      "id": "19bf66fa-e4f6-4690-89f2-5d69b4f713fb",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Aqui estão as notas fiscais extraídas de um arquivo CSV:\n\n{{ $json.report }}\n\nCom base nesses dados, gere um **relatório em Markdown** contendo as seguintes seções:\n\nOBS: Cada linha da tabela abaixo é uma nota fiscal\n\n---\n\n## 📊 Relatório de Notas Fiscais\n\n1. **Quantidade total de notas**  \nInforme a quantidade total de notas no arquivo. Cada linha da tabela é uma nota.\n\n2. Qual o maior valor da nota fiscal encontrada? Qual o destinatário e a data?\n\n3. **Valor médio (R$)**  \nCalcule e apresente o valor médio das notas.\n\n4. **Notas acima de R$ 100.000**  \nListe essas notas em uma **tabela Markdown** com as colunas:  \n`Número` | `Valor (R$)` | `Emitente`\n\n5. **UF com maior valor total de notas**  \nApresente a sigla da UF e o valor total somado correspondente.\n\n---\n\n**Observações:**  \n- A resposta deve conter apenas o conteúdo formatado em Markdown.  \n- Formate valores monetários com duas casas decimais e separador de milhar.  \n- Não inclua explicações, apenas o relatório.\n\n---\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        60
+      ],
+      "id": "2b8f2d21-9988-474b-aab3-60ff163072ec",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "operation": "html",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1800,
+        60
+      ],
+      "id": "4afeeebb-08d4-4f4e-9f6b-790bef03e6f1",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        0
+      ],
+      "id": "1faa09e4-d3a9-4b43-adc8-f6baf94d33aa",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  return {\n    json: {\n      \"DATA EMISSÃO\": item.json[\"DATA EMISSÃO\"] || item.json[\"DATA EMISSAO\"],\n      \"UF EMITENTE\": item.json[\"UF DESTINATÁRIO\"],\n      \"VALOR NOTA FISCAL\": item.json[\"VALOR TOTAL\"] || item.json[\"Valor total\"]\n    }\n  };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        740,
+        200
+      ],
+      "id": "29c7739c-1279-4199-8280-09fef45a6d20",
+      "name": "Code1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        960,
+        60
+      ],
+      "id": "8b1bc32c-db63-4a05-9f3c-4cf5138da887",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const notas = $input.all().map(item => item.json);\n\nlet markdown = `# Relatório de Notas Fiscais\\n\\n`;\nmarkdown += `| Data Emissão       | UF Emitente | Valor Nota (R$) |\\n`;\nmarkdown += `|--------------------|-------------|-----------------|\\n`;\n\nnotas.forEach(nota => {\n  markdown += `| ${nota[\"DATA EMISSÃO\"]} | ${nota[\"UF EMITENTE\"]}    | ${parseFloat(nota[\"VALOR NOTA FISCAL\"]).toFixed(2)} |\\n`;\n});\n\nreturn [{ json: { report: markdown } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        60
+      ],
+      "id": "91b35af1-887f-4079-819e-5f3d20d8609e",
+      "name": "Code2"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        1560,
+        240
+      ],
+      "id": "5cbdb825-bb8d-4bd6-92db-39153275ca88",
+      "name": "Calculator"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        1380,
+        280
+      ],
+      "id": "XXXXXXXXXXXXXXXXXXXX",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "XXXXXXXXXXXXXXXXXXX",
+          "name": "XXXXXXXXXXXXXX"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Compression": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract from File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File1": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Compression",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        []
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code2": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6a137c3b-63c7-4ce0-b8bf-da77a012794b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cea5ff8923c1a2bf53442f4c9028ceef094c30b0bab66c3e2c89b5b2f0851783"
+  },
+  "id": "r0G64ThaeFOl98Iw",
+  "tags": []
+}
