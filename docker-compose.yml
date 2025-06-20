@@ -2,6 +2,17 @@
 # Source from:
 # * https://docs.n8n.io/hosting/installation/server-setups/docker-compose/#5-create-local-files-directory
 services:
+  pgvector:
+    image: pgvector/pgvector:pg17
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: "n8n-pgvector"
+      POSTGRES_USER: "n8n"
+      POSTGRES_DB: "db"
+    volumes:
+      - pgvector_data:/var/lib/postgresql/data
+
   n8n:
     image: docker.n8n.io/n8nio/n8n
     restart: always

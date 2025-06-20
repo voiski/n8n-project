@@ -26,6 +26,11 @@ The first time will require to sign for a free license.
 Next, you will need to config some connection at [n8n credentials]:
 * Add connection for ollama:
     * Base URL: http://ollama:11434
+* Add connection for postgres:
+    * Host: pgvector
+    * Username: n8n
+    * Password: n8n-pgvector
+    * Database: db
 
 You can also play around ollama webui at http://localhost:3000.
 * If not done yet, load a model using `make load-model`
