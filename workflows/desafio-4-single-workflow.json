@@ -1,0 +1,662 @@
+{
+  "name": "Consolidated VR Calculation",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start - Upload Files Here",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [
+        -432,
+        624
+      ],
+      "id": "25c342ae-fb7f-4414-bffc-72166a9b670b"
+    },
+    {
+      "parameters": {
+        "filePath": "/files/ATIVOS.xlsx",
+        "dataPropertyName": "{{$json.data.ativos_file}}"
+      },
+      "name": "Read Ativos",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "217a9c46-6841-4381-b72e-35f20931c651"
+    },
+    {
+      "parameters": {
+        "filePath": "/files/ADMISSAO_ABRIL.xlsx",
+        "dataPropertyName": "{{$json.data.admissoes_file}}"
+      },
+      "name": "Read Admissoes",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        0,
+        144
+      ],
+      "id": "a412d85d-3c05-45a7-9975-8c85703ab5b1"
+    },
+    {
+      "parameters": {
+        "filePath": "/files/AFASTAMENTOS.xlsx",
+        "dataPropertyName": "{{$json.data.afastamentos_file}}"
+      },
+      "name": "Read Afastamentos",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        0,
+        288
+      ],
+      "id": "7c3e5246-ba0d-4b47-9c4a-2dcadae7876b"
+    },
+    {
+      "parameters": {
+        "filePath": "/files/APRENDIZ.xlsx",
+        "dataPropertyName": "{{$json.data.aprendizes_file}}"
+      },
+      "name": "Read Aprendizes",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        0,
+        432
+      ],
+      "id": "7fee0cdf-8c6f-4460-9315-775b86b48258"
+    },
+    {
+      "parameters": {
+        "filePath": "/files/DESLIGADOS.xlsx",
+        "dataPropertyName": "{{$json.data.desligados_file}}"
+      },
+      "name": "Read Desligados",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        0,
+        560
+      ],
+      "id": "d4f39c5e-5878-4695-87cf-5fb352a8b4c9"
+    },
+    {
+      "parameters": {
+        "filePath": "/files/ESTAGIO.xlsx",
+        "dataPropertyName": "{{$json.data.estagiarios_file}}"
+      },
+      "name": "Read Estagiarios",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        0,
+        704
+      ],
+      "id": "13e57fae-53d9-4bcc-9bec-765007ed4465"
+    },
+    {
+      "parameters": {
+        "filePath": "/files/EXTERIOR.xlsx",
+        "dataPropertyName": "{{$json.data.exterior_file}}"
+      },
+      "name": "Read Exterior",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        0,
+        848
+      ],
+      "id": "b4ba4541-a5a6-445f-9494-b10ea30196af"
+    },
+    {
+      "parameters": {
+        "filePath": "/files/FERIAS.xlsx",
+        "dataPropertyName": "{{$json.data.ferias_file}}"
+      },
+      "name": "Read Ferias",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        0,
+        992
+      ],
+      "id": "24556756-1981-4a7b-9802-8f1422f0aeb8"
+    },
+    {
+      "parameters": {
+        "filePath": "/files/Base_dias_uteis.xlsx",
+        "dataPropertyName": "{{$json.data.dias_uteis_file}}"
+      },
+      "name": "Read Dias Uteis",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1120
+      ],
+      "id": "3cd8c69a-097d-4648-82cc-fb06b0bea3ee"
+    },
+    {
+      "parameters": {
+        "filePath": "/files/Base_sindicato_x_valor.xlsx",
+        "dataPropertyName": "{{$json.data.valor_sindicato_file}}"
+      },
+      "name": "Read Valor Sindicato",
+      "type": "n8n-nodes-base.readBinaryFile",
+      "typeVersion": 1,
+      "position": [
+        0,
+        1264
+      ],
+      "id": "a716d182-ee80-4ee6-97c6-bceb915b7fb1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// --- INPUTS ---\n// Helper function to extract the clean JSON data from n8n's input structure\nconst getData = (nodeName) => $(nodeName).all().map(item => item.json);\n\nconst allEmployees = getData('Ativos');\nconst vacationData = getData('Ferias');\nconst terminationData = getData('Desligados');\nconst newHireData = getData('Admissoes');\nconst unionDaysData = getData('Dias Uteis');\nconst unionValueData = getData('Valor Sindicato');\n\n// Werid column names\nconst unionValueEstadoColumn = Object.keys(unionValueData[0])[0];\n\n// Exclusion Data\nconst estagiarios = getData('Estagiarios');\nconst aprendizes = getData('Aprendizes');\nconst afastados = getData('Afastamentos');\nconst exterior = getData('Exterior');\n\n// --- CONFIGURATION ---\nconst periodStartDate = new Date('2025-04-15T00:00:00');\nconst periodEndDate = new Date('2025-05-15T00:00:00');\n\n// --- DATA PREPARATION ---\n// Create Sets for fast lookups of excluded MATRICULAs\nconst estagiariosSet = new Set(estagiarios.map(e => e.MATRICULA));\nconst aprendizesSet = new Set(aprendizes.map(a => a.MATRICULA));\nconst afastadosSet = new Set(afastados.map(a => a.MATRICULA));\nconst exteriorSet = new Set(exterior.map(e => e.Cadastro));\n\n\n// --- HELPER FUNCTIONS ---\nfunction getWorkingDays(startDate, endDate) {\n  let count = 0;\n  const curDate = new Date(startDate.getTime());\n  while (curDate <= endDate) {\n    const dayOfWeek = curDate.getDay();\n    if (dayOfWeek !== 0 && dayOfWeek !== 6) count++;\n    curDate.setDate(curDate.getDate() + 1);\n  }\n  return count;\n}\n\nfunction mapSindicatoToEstado(sindicatoName) {\n  if (!sindicatoName) return null;\n  if (sindicatoName.includes('SP')) return 'São Paulo';\n  if (sindicatoName.includes('RS')) return 'Rio Grande do Sul';\n  if (sindicatoName.includes('PR')) return 'Paraná';\n  if (sindicatoName.includes('RJ')) return 'Rio de Janeiro';\n  return null;\n}\n\n// --- FILTERING LOGIC ---\n// Filter out all excluded employees from the main list\nconst eligibleEmployees = allEmployees.filter(emp => {\n  const matricula = emp.MATRICULA;\n  const cargo = emp['TITULO DO CARGO'] || '';\n\n  return !\n    (estagiariosSet.has(matricula) ||\n      aprendizesSet.has(matricula) ||\n      afastadosSet.has(matricula) ||\n      exteriorSet.has(matricula) ||\n      cargo.toLowerCase().includes('diretor'));\n});\n\n// --- MAIN PROCESSING LOGIC ---\nconst results = [];\n\nfor (const employee of eligibleEmployees) {\n  const matricula = employee.MATRICULA;\n  const sindicato = employee.Sindicato;\n\n  const unionInfo = unionDaysData.find(u => u['SINDICADO'] === sindicato);\n  if (!unionInfo) continue;\n  \n  let payableDays = parseInt(unionInfo['DIAS UTEIS ']);\n\n  const estado = mapSindicatoToEstado(sindicato);\n  const valueInfo = unionValueData.find(v => v[unionValueEstadoColumn].trim() === estado);\n  if (!valueInfo) continue;\n  \n  const dailyValue = parseFloat(valueInfo['VALOR']);\n\n  // Adjust for Vacation\n  const vacation = vacationData.find(v => v.MATRICULA === matricula);\n  if (vacation) {\n    payableDays -= parseInt(vacation['DIAS DE FÉRIAS']);\n  }\n\n  // Adjust for New Hires\n  const newHire = newHireData.find(nh => nh.MATRICULA === matricula);\n  if (newHire) {\n    const admissionDate = new Date(newHire['Admissão'] + 'T00:00:00');\n    if (admissionDate >= periodStartDate && admissionDate <= periodEndDate) {\n      payableDays = getWorkingDays(admissionDate, periodEndDate);\n    }\n  }\n\n  // Adjust for Terminations\n  const termination = terminationData.find(t => t.MATRICULA === matricula);\n  if (termination) {\n    const terminationDate = new Date(termination['DATA DEMISSÃO'] + 'T00:00:00');\n    const communicationOK = termination['COMUNICADO DE DESLIGAMENTO'] === 'OK';\n    if (terminationDate <= periodEndDate && communicationOK) {\n      payableDays = 0;\n    } else if (terminationDate >= periodStartDate && terminationDate <= periodEndDate) {\n      payableDays = getWorkingDays(periodStartDate, terminationDate);\n    }\n  }\n\n  payableDays = Math.max(0, payableDays);\n  const totalValue = payableDays * dailyValue;\n  const companyShare = totalValue * 0.80;\n  const employeeShare = totalValue * 0.20;\n\n  results.push({\n    json: {\n      'MATRICULA': matricula,\n      'SINDICATO': sindicato,\n      'DIAS_PAGAVEIS': payableDays,\n      'VALOR_DIARIO': dailyValue.toFixed(2),\n      'VALOR_TOTAL_BENEFICIO': totalValue.toFixed(2),\n      'VALOR_PAGO_PELA_EMPRESA': companyShare.toFixed(2),\n      'VALOR_DESCONTADO_COLABORADOR': employeeShare.toFixed(2)\n    }\n  });\n}\n\nreturn results;"
+      },
+      "name": "Process and Calculate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [
+        1104,
+        640
+      ],
+      "id": "fb881b93-9f0a-4cba-9f7f-e11c086dff29"
+    },
+    {
+      "parameters": {
+        "operation": "toFile",
+        "options": {}
+      },
+      "name": "Create Spreadsheet",
+      "type": "n8n-nodes-base.spreadsheetFile",
+      "typeVersion": 1,
+      "position": [
+        1360,
+        640
+      ],
+      "id": "73e511b2-f637-4a1e-b1dc-db8cd11fb705"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 10,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        800,
+        512
+      ],
+      "id": "40d336d3-bf04-495e-be87-3775ca40b655",
+      "name": "Juncao"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "{{$json.data.ativos_file}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        192,
+        0
+      ],
+      "id": "5cb5091f-3398-47ac-8f4b-e494ec5d7584",
+      "name": "Ativos"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "{{$json.data.admissoes_file}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        192,
+        144
+      ],
+      "id": "d777c374-0ecc-48f5-bbb2-0ce434ade420",
+      "name": "Admissoes"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "{{$json.data.afastamentos_file}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        192,
+        288
+      ],
+      "id": "5803501b-9a38-4538-a1c1-d919cb266cf8",
+      "name": "Afastamentos"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "{{$json.data.aprendizes_file}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        192,
+        432
+      ],
+      "id": "462704c7-c2f3-45be-8a71-99f9cf237b21",
+      "name": "Aprendizes"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "{{$json.data.desligados_file}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        192,
+        560
+      ],
+      "id": "36d6b373-cdae-4943-b75c-8456c068af5a",
+      "name": "Desligados"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "{{$json.data.estagiarios_file}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        192,
+        704
+      ],
+      "id": "a4c4eb3b-2e4d-4f89-b37f-0c02c7d8bdf4",
+      "name": "Estagiarios"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "{{$json.data.exterior_file}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        192,
+        848
+      ],
+      "id": "416aa7f9-4df7-413c-98df-c27eae32bd74",
+      "name": "Exterior"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "{{$json.data.ferias_file}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        192,
+        992
+      ],
+      "id": "c5acd8b7-7738-40cb-91f6-3be77ac4e8fe",
+      "name": "Ferias"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "{{$json.data.dias_uteis_file}}",
+        "options": {
+          "range": "A2:B1000"
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        192,
+        1120
+      ],
+      "id": "4cab7771-5f29-4c51-bc20-aece92fd28ee",
+      "name": "Dias Uteis"
+    },
+    {
+      "parameters": {
+        "operation": "xlsx",
+        "binaryPropertyName": "{{$json.data.valor_sindicato_file}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        192,
+        1264
+      ],
+      "id": "036f8a23-5e5a-4553-b42d-ab9f6646027c",
+      "name": "Valor Sindicato"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Start - Upload Files Here": {
+      "main": [
+        [
+          {
+            "node": "Read Ativos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Admissoes",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Afastamentos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Aprendizes",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Desligados",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Estagiarios",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Exterior",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Ferias",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Dias Uteis",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Valor Sindicato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Ativos": {
+      "main": [
+        [
+          {
+            "node": "Ativos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process and Calculate": {
+      "main": [
+        [
+          {
+            "node": "Create Spreadsheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Admissoes": {
+      "main": [
+        [
+          {
+            "node": "Admissoes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Afastamentos": {
+      "main": [
+        [
+          {
+            "node": "Afastamentos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Aprendizes": {
+      "main": [
+        [
+          {
+            "node": "Aprendizes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Desligados": {
+      "main": [
+        [
+          {
+            "node": "Desligados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Estagiarios": {
+      "main": [
+        [
+          {
+            "node": "Estagiarios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Exterior": {
+      "main": [
+        [
+          {
+            "node": "Exterior",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Ferias": {
+      "main": [
+        [
+          {
+            "node": "Ferias",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Dias Uteis": {
+      "main": [
+        [
+          {
+            "node": "Dias Uteis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Valor Sindicato": {
+      "main": [
+        [
+          {
+            "node": "Valor Sindicato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Juncao": {
+      "main": [
+        [
+          {
+            "node": "Process and Calculate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ativos": {
+      "main": [
+        [
+          {
+            "node": "Juncao",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Admissoes": {
+      "main": [
+        [
+          {
+            "node": "Juncao",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Afastamentos": {
+      "main": [
+        [
+          {
+            "node": "Juncao",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Aprendizes": {
+      "main": [
+        [
+          {
+            "node": "Juncao",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "Desligados": {
+      "main": [
+        [
+          {
+            "node": "Juncao",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "Estagiarios": {
+      "main": [
+        [
+          {
+            "node": "Juncao",
+            "type": "main",
+            "index": 5
+          }
+        ]
+      ]
+    },
+    "Exterior": {
+      "main": [
+        [
+          {
+            "node": "Juncao",
+            "type": "main",
+            "index": 6
+          }
+        ]
+      ]
+    },
+    "Ferias": {
+      "main": [
+        [
+          {
+            "node": "Juncao",
+            "type": "main",
+            "index": 7
+          }
+        ]
+      ]
+    },
+    "Dias Uteis": {
+      "main": [
+        [
+          {
+            "node": "Juncao",
+            "type": "main",
+            "index": 8
+          }
+        ]
+      ]
+    },
+    "Valor Sindicato": {
+      "main": [
+        [
+          {
+            "node": "Juncao",
+            "type": "main",
+            "index": 9
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "36ca30d8-4761-4036-96c2-7664ef231f61",
+  "meta": {
+    "instanceId": "86b1bf3a9351d9ad01546604056154ad5639d734f3528d2f4b974772323aa93f"
+  },
+  "id": "xrK12qoDFBgDvzgg",
+  "tags": []
+}
